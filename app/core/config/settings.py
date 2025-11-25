@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     DB_PORT: int = Field(default=5432)
     DB_NAME: str = Field(default="amrutamdb")
     DB_ECHO: bool = Field(default=False)
+    #admin
+    DEFAULT_ADMIN_EMAIL: str = "admin@gmail.com"
+    DEFAULT_ADMIN_PASSWORD: str = "admin"
 
     # Redis
     REDIS_HOST: str = Field(default="localhost")

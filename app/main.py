@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
-
+from contextlib import asynccontextmanager
 # Routers
 from app.api.v1.identity.routes import router as identity_router
 from app.api.v1.doctors.routes import router as doctors_router
@@ -17,16 +17,22 @@ from app.api.v1.admin.routes import router as admin_router
 from app.api.v1.system.routes import router as system_router
 
 # Middleware
+from app.infra.db.startup import create_initial_admin
 from app.infra.redis.client import redis_client
 from app.core.idempotency.middleware import IdempotencyMiddleware
 from app.core.rate_limiting.middleware import RateLimitMiddleware
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Startup
+    await create_initial_admin()
+    yield
+    # Shutdown (optional cleanup here)
 # -----------------------------------------------------------
 # CREATE APP (NO LIFESPAN USED ANYMORE)
 # -----------------------------------------------------------
-app = FastAPI(title="Amrutam Backend")
-
+app = FastAPI(title="Amrutam Backend", lifespan=lifespan)
 
 # -----------------------------------------------------------
 # ADD PROMETHEUS INSTRUMENTATION (BEFORE STARTUP)

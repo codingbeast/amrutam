@@ -1,9 +1,7 @@
 from fastapi import APIRouter
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import text
 from app.infra.db.session import async_session_factory
 from app.infra.redis.client import redis_client
-
 router = APIRouter(prefix="/system", tags=["system"])
 
 
@@ -27,7 +25,7 @@ async def readyz():
     # ---- DB Check ----
     try:
         async with async_session_factory() as session:   # ✅ FIXED
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
     except Exception as e:
         return {
             "status": "error",

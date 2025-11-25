@@ -11,7 +11,7 @@ from app.infra.db.session import get_session
 from app.domain.identity.repository import UserRepository
 from app.domain.identity.models import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/identity/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/identity/login/oauth")
 
 
 async def get_current_user(

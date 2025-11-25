@@ -1,0 +1,7 @@
+[MESSAGES CONTROL]
+disable =
+    W0703,  # broad-except
+    W0611,  # unused-import
+    C0114,  # missing-module-docstring
+    C0116,  # missing-function-docstring
+    C0115,  #missing class docstring

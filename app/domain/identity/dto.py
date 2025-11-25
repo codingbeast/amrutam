@@ -1,25 +1,27 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
+from app.domain.identity.models import UserRole
 
 
-class RegisterUserRequest(BaseModel):
-     # patient | doctor | admin
+class AdminCreateUserRequest(BaseModel):
     email: EmailStr
     password: str
+    role: UserRole  # admin can create ANY role
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "email": "user@example.com",
-                "password": "stringst"
-            }
-        }
-    }
+class RegisterUserRequest(BaseModel):
+    email: EmailStr
+    password: str
+    role: UserRole = Field(..., pattern="^(patient|doctor)$")
+    #block admin registration
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-
+    
+class LoginRequestOauth(BaseModel):
+    username : EmailStr
+    password : str
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -28,7 +30,7 @@ class TokenResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: str
+    id: UUID
     email: EmailStr
     role: str
     is_active: bool
