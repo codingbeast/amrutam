@@ -1,0 +1,78 @@
+version: "3.9"
+
+services:
+
+  # =========================
+  # PostgreSQL
+  # =========================
+  postgres:
+    image: postgres:16
+    container_name: amrutam_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: amrutam
+      POSTGRES_PASSWORD: amrutam_pass
+      POSTGRES_DB: amrutamdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # =========================
+  # Redis (locks, cache, rate limit)
+  # =========================
+  redis:
+    image: redis:7
+    container_name: amrutam_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # =========================
+  # Alembic Migrations
+  # auto-run on startup
+  # =========================
+  migrations:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.migrations
+    container_name: amrutam_migrations
+    depends_on:
+      - postgres
+    environment:
+      DB_USER: amrutam
+      DB_PASSWORD: amrutam_pass
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: amrutamdb
+    command: >
+      bash -c "sleep 3 && alembic upgrade head"
+    restart: on-failure
+
+  # =========================
+  # FastAPI Application
+  # =========================
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.api
+    container_name: amrutam_api
+    depends_on:
+      - postgres
+      - redis
+      - migrations
+    environment:
+      DB_USER: amrutam
+      DB_PASSWORD: amrutam_pass
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: amrutamdb
+    ports:
+      - "8000:8000"
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:

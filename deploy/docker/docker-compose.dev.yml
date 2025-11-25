@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: amrutam_postgres_dev
+    restart: always
+    environment:
+      POSTGRES_USER: amrutam
+      POSTGRES_PASSWORD: amrutam_pass
+      POSTGRES_DB: amrutamdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: amrutam_redis_dev
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+
+  api:
+    build:
+      context: ${COMPOSE_PROJECT_DIR}
+      dockerfile: ${COMPOSE_PROJECT_DIR}/deploy/docker/Dockerfile.dev
+    container_name: amrutam_api_dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${COMPOSE_PROJECT_DIR}:/app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: amrutam
+      DB_PASSWORD: amrutam_pass
+      DB_NAME: amrutamdb
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - postgres
+      - redis
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:

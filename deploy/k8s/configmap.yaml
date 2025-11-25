@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amrutam-config
+  namespace: amrutam
+data:
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "amrutamdb"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  # e.g. for Celery: redis://redis:6379/0
+  BROKER_URL: "redis://redis:6379/0"
+  RESULT_BACKEND: "redis://redis:6379/1"

@@ -1,0 +1,114 @@
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# Poetry / Pipenv
+poetry.lock
+Pipfile.lock
+
+# ==========================================
+# Secrets / Environment
+# ==========================================
+.env
+.env.dev
+.env.prod
+.env.local
+*.env
+*.key
+*.pem
+
+# ==========================================
+# FastAPI / Uvicorn
+# ==========================================
+*.log
+logs/
+*.sqlite3
+uvicorn.log
+
+# ==========================================
+# IDEs / Editors
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# OS files
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Migrations (compiled)
+# ==========================================
+alembic/versions/__pycache__/
+alembic/versions/*.pyc
+
+# DO NOT ignore actual Alembic migration scripts
+# (keep .py files)
+# Only ignore cache/compiled artifacts
+
+# ==========================================
+# Byte-compiled, compiled artifacts
+# ==========================================
+*.so
+*.dll
+*.out
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==========================================
+# Docker
+# ==========================================
+docker-api/
+*.tar
+docker-compose.override.yml
+deploy/docker/*.log
+
+# Avoid committing local dev bind-mount data
+deploy/docker/postgres_data/
+deploy/docker/redis_data/
+
+# ==========================================
+# Coverage / Test
+# ==========================================
+coverage.xml
+.coverage
+.pytest_cache/
+htmlcov/
+
+# ==========================================
+# Redis / Postgres dumps
+# ==========================================
+*.rdb
+*.dump
+*.sql
+
+# ==========================================
+# Generated files
+# ==========================================
+*.generated.*
+*.cache
+.cache/
+tmp/
+temp/
+
+# ==========================================
+# Editor config / Workspace files
+# ==========================================
+*.code-workspace
+
