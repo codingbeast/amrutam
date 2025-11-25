@@ -2,9 +2,18 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class RegisterUserRequest(BaseModel):
+     # patient | doctor | admin
     email: EmailStr
-    password: str = Field(min_length=8)
-    role: str = "patient"  # patient | doctor | admin
+    password: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "user@example.com",
+                "password": "stringst"
+            }
+        }
+    }
 
 
 class LoginRequest(BaseModel):

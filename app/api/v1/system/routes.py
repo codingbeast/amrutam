@@ -1,5 +1,7 @@
 from fastapi import APIRouter
-from app.infra.db.session import AsyncSessionFactory
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.infra.db.session import async_session_factory
 from app.infra.redis.client import redis_client
 
 router = APIRouter(prefix="/system", tags=["system"])
@@ -9,8 +11,7 @@ router = APIRouter(prefix="/system", tags=["system"])
 async def healthz():
     """
     Liveness probe.
-    Just check that the app process is alive.
-    Avoid heavy checks here.
+    Just checks that the app process is alive.
     """
     return {"status": "ok"}
 
@@ -19,23 +20,35 @@ async def healthz():
 async def readyz():
     """
     Readiness probe.
-    Check dependencies like DB and Redis.
-    K8s will only send traffic to pod when this is 200.
+    Checks DB and Redis.
+    K8s sends traffic only if this returns 200.
     """
-    # Check DB
+
+    # ---- DB Check ----
     try:
-        async with AsyncSessionFactory() as session:
-            # simple ping
+        async with async_session_factory() as session:   # ✅ FIXED
             await session.execute("SELECT 1")
     except Exception as e:
-        return {"status": "error", "component": "database", "detail": str(e)}
+        return {
+            "status": "error",
+            "component": "database",
+            "detail": str(e),
+        }
 
-    # Check Redis
+    # ---- Redis Check ----
     try:
         pong = await redis_client.ping()
         if not pong:
-            return {"status": "error", "component": "redis", "detail": "no pong"}
+            return {
+                "status": "error",
+                "component": "redis",
+                "detail": "No PONG",
+            }
     except Exception as e:
-        return {"status": "error", "component": "redis", "detail": str(e)}
+        return {
+            "status": "error",
+            "component": "redis",
+            "detail": str(e),
+        }
 
     return {"status": "ok"}

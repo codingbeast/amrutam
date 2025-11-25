@@ -1,19 +1,15 @@
-import asyncio
-from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config.settings import settings
 
-
 # --------------------------------------
-# DATABASE URL (from env variables)
+# DATABASE URL
 # --------------------------------------
 DATABASE_URL = (
     f"postgresql+asyncpg://{settings.DB_USER}:"
@@ -21,70 +17,54 @@ DATABASE_URL = (
     f"{settings.DB_PORT}/{settings.DB_NAME}"
 )
 
-
+class Base(DeclarativeBase):
+    pass
 # --------------------------------------
-# CREATE ASYNC ENGINE (global)
+# ENGINE
 # --------------------------------------
 engine = create_async_engine(
     DATABASE_URL,
-    echo=settings.DB_ECHO,  # Debug SQL logs
+    echo=settings.DB_ECHO,
     pool_size=10,
     max_overflow=20,
-    pool_pre_ping=True,      # check stale connections
-    pool_recycle=1800,       # recycle every 30 mins
+    pool_pre_ping=True,
+    pool_recycle=1800,
 )
 
-
 # --------------------------------------
-# ASYNC SESSION FACTORY
+# SESSION FACTORY
 # --------------------------------------
-AsyncSessionFactory = async_sessionmaker(
+async_session_factory = async_sessionmaker(
     bind=engine,
-    autocommit=False,
     autoflush=False,
+    autocommit=False,
     expire_on_commit=False,
-    class_=AsyncSession,
 )
 
-
 # --------------------------------------
-# FASTAPI DEPENDENCY — DB SESSION
+# FASTAPI DEPENDENCY
 # --------------------------------------
-@asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    session: AsyncSession = AsyncSessionFactory()
-
-    try:
-        yield session
-        await session.commit()
-    except Exception:
-        await session.rollback()
-        raise
-    finally:
-        await session.close()
-
+    async with async_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 # --------------------------------------
-# INIT DB (used in app startup event)
+# SIMPLE CONNECT TEST
 # --------------------------------------
 async def init_db():
-    """
-    Used in FastAPI startup event.
-    Ensures the database connection can be established.
-    """
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(lambda x: None)  # simple ping
-        print("DB connection established.")
-    except Exception as e:
-        print("DB connection failed:", e)
-        raise
+    async with engine.begin() as conn:
+        await conn.run_sync(lambda x: None)
+    print("DB connection OK")
 
-
-# Optional for Alembic or CLI scripts
+# Sync engine for Alembic
 def get_sync_engine():
-    """Return a sync engine for Alembic migrations (optional)."""
     from sqlalchemy import create_engine
-
-    SYNC_DB_URL = DATABASE_URL.replace("+asyncpg", "")
-    return create_engine(SYNC_DB_URL)
+    SYNC_URL = DATABASE_URL.replace("+asyncpg", "")
+    return create_engine(SYNC_URL)
