@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 from app.infra.db.session import get_session
 from app.domain.identity.dto import (
+    RefreshTokenRequest,
     RegisterUserRequest,
     LoginRequest,
     LoginRequestOauth,
@@ -78,7 +79,14 @@ async def login_oauth(
     tokens = await service.create_tokens_for_user(user)
     return tokens
 
-
+@router.post("/token/refresh", response_model=TokenResponse)
+async def refresh_access_token(
+    payload: RefreshTokenRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    service = IdentityService(session)
+    tokens = await service.refresh_tokens(payload.refresh_token)
+    return tokens
 
 
 

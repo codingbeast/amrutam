@@ -3,13 +3,17 @@ from __future__ import annotations
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from fastapi import HTTPException, status
 from app.core.security.passwords import hash_password, verify_password
 from app.core.security.jwt import create_access_token, create_refresh_token
 from app.domain.identity.dto import AdminCreateUserRequest, RegisterUserRequest, LoginRequest, TokenResponse
 from app.domain.identity.models import User, UserRole
 from app.domain.identity.repository import UserRepository
-
+from app.core.security.jwt import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+)
 
 class IdentityService:
     def __init__(self, session: AsyncSession):
@@ -68,15 +72,48 @@ class IdentityService:
             return None
         return user
 
-    async def create_tokens_for_user(self, user: User):
-        """create tokens for user"""
+    async def create_tokens_for_user(self, user: User) -> TokenResponse:
         access = create_access_token(
             subject=str(user.id),
-            extra={"role": user.role.value},
+            extra={"role": user.role},
         )
         refresh = create_refresh_token(subject=str(user.id))
-        return {
-            "access_token": access,
-            "refresh_token": refresh,
-            "token_type": "bearer",
-        }
+        return TokenResponse(
+            access_token=access,
+            refresh_token=refresh,
+            token_type="bearer",
+        )
+
+    async def refresh_tokens(self, refresh_token: str) -> TokenResponse:
+        # 1. Decode & validate
+        try:
+            payload = decode_token(refresh_token)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
+
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+            )
+
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
+
+        # 2. Load user
+        user = await self.repo.get_by_id(user_id)
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+            )
+
+        # 3. Issue fresh access + refresh
+        return await self.create_tokens_for_user(user)

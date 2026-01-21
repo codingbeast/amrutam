@@ -36,3 +36,6 @@ class UserResponse(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

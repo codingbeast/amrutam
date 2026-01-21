@@ -14,7 +14,7 @@ async def create_initial_admin():
     async with async_session_factory() as session:
         # check existing admin
         result = await session.execute(
-            select(User).where(User.role == UserRole.admin)
+                select(User).where(User.role == UserRole.admin).limit(1)
         )
         admin_exists = result.scalar_one_or_none()
 
